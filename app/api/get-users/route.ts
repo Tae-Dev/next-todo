@@ -1,24 +1,6 @@
-import { ServiceError, credentials, loadPackageDefinition } from '@grpc/grpc-js';
-import { loadSync } from '@grpc/proto-loader';
 import { NextResponse } from 'next/server';
-import path from 'path';
 
-// Load .proto file
-const PROTO_PATH = path.resolve(process.cwd(), 'proto/users.proto');
-const packageDefinition = loadSync(PROTO_PATH, {
-  keepCase: true,
-  longs: String,
-  enums: String,
-  defaults: true,
-  oneofs: true,
-});
-const proto = loadPackageDefinition(packageDefinition) as any;
-
-// gRPC Client
-const client = new proto.DataService(
-  'localhost:50051',
-  credentials.createInsecure()
-);
+const API_URL = 'https://dummyjson.com/users';
 
 const transformJSON = (data: any) => {
   const departmentSummary: Record<string, any> = {};
@@ -60,16 +42,18 @@ const transformJSON = (data: any) => {
 
 
 export async function GET() {
-  return new Promise((resolve) => {
-    client.FetchUsers({}, (error: ServiceError | null, response: any) => {
-      if (error) {
-        resolve(NextResponse.json({ error: 'Failed to fetch users from gRPC server' }, { status: 500 }));
-      } else {
-        const transformedData = transformJSON(response);
-        console.log('transformedData', transformedData);
-        
-        resolve(NextResponse.json(transformedData, { status: 200 }));
-      }
-    });
-  }) as Promise<Response>;
+  try {
+    const response = await fetch(API_URL);
+    if (!response.ok) {
+      throw new Error('Failed to fetch users');
+    }
+
+    const data = await response.json();
+    const transformedData = transformJSON(data);
+
+    return NextResponse.json(transformedData, { status: 200 });
+  } catch (error) {
+    console.error('Error fetching users:', error);
+    return NextResponse.json({ error: 'Failed to fetch users from API' }, { status: 500 });
+  }
 }
