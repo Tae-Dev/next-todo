@@ -61,26 +61,18 @@ function TodoLostPage() {
 
   useEffect(() => {
     if (temp.length > 0) {
-      const timeoutId = setTimeout(async () => {
+      const timeoutId = setTimeout(() => {
         for (const item of temp) {
-          await new Promise<void>((resolve) =>
-            setTimeout(() => {
-              setList((prevList) => [...prevList, item]);
-              if (item.type === "Fruit") {
-                setFruitList((prevFruits) =>
-                  prevFruits.filter((fruit) => fruit.name !== item.name)
-                );
-              } else if (item.type === "Vegetable") {
-                setVegetableList((prevVegetables) =>
-                  prevVegetables.filter(
-                    (vegetable) => vegetable.name !== item.name
-                  )
-                );
-              }
-
-              resolve();
-            }, 500)
-          );
+          setList((prevList) => [...prevList, item]);
+          if (item.type === "Fruit") {
+            setFruitList((prevFruits) =>
+              prevFruits.filter((fruit) => fruit.name !== item.name)
+            );
+          } else if (item.type === "Vegetable") {
+            setVegetableList((prevVegetables) =>
+              prevVegetables.filter((vegetable) => vegetable.name !== item.name)
+            );
+          }
         }
         setTemp([]);
       }, 5000);
@@ -90,41 +82,22 @@ function TodoLostPage() {
   }, [temp]);
 
   const handleClickList = (item: masterListType) => {
-    const filterList = list.filter((f) => f.name === item.name);
-    if (item.type == "Fruit") {
-      if (filterList.length > 0) {
-        const newList = list.filter((f) => f.name !== item.name);
-        setList(newList);
-        setFruitList([...fruitList, item]);
-        setTemp([...temp, item]);
-      } else {
-        const newListFruit = fruitList.filter(
-          (fruitItem) => fruitItem.name !== item.name
-        );
-        setList([...list, item]);
-        setFruitList(newListFruit);
-        const filterTemp = temp.filter(
-          (tempItem) => tempItem.name !== item.name
-        );
-        setTemp(filterTemp);
-      }
-    } else if (item.type == "Vegetable") {
-      if (filterList.length > 0) {
-        const newList = list.filter((f) => f.name !== item.name);
-        setList(newList);
-        setVegetableList([...vegetableList, item]);
-        setTemp([...temp, item]);
-      } else {
-        const newListVegetable = vegetableList.filter(
-          (vegetableItem) => vegetableItem.name !== item.name
-        );
-        setList([...list, item]);
-        setVegetableList(newListVegetable);
-        const filterTemp = temp.filter(
-          (tempItem) => tempItem.name !== item.name
-        );
-        setTemp(filterTemp);
-      }
+    const isInMasterList = list.some((i) => i.name === item.name);
+    if (isInMasterList) {
+      setList((prev) => prev.filter((i) => i.name !== item.name));
+      if (item.type === "Fruit") setFruitList((prev) => [...prev, item]);
+      else setVegetableList((prev) => [...prev, item]);
+      setTemp((prev) =>
+        prev.some((tempItem) => tempItem.name === item.name)
+          ? prev
+          : [...prev, item]
+      );
+    } else {
+      if (item.type === "Fruit")
+        setFruitList((prev) => prev.filter((i) => i.name !== item.name));
+      else setVegetableList((prev) => prev.filter((i) => i.name !== item.name));
+      setList((prev) => [...prev, item]);
+      setTemp((prev) => prev.filter((i) => i.name !== item.name));
     }
   };
 
@@ -134,7 +107,7 @@ function TodoLostPage() {
         display: "flex",
         minHeight: 600,
         justifyContent: "space-between",
-        gap: 10
+        gap: 10,
       }}
     >
       <div style={{ width: 200 }}>
