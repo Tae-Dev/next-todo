@@ -66,6 +66,8 @@ export async function GET() {
         resolve(NextResponse.json({ error: 'Failed to fetch users from gRPC server' }, { status: 500 }));
       } else {
         const transformedData = transformJSON(response);
+        console.log('transformedData', transformedData);
+        
         resolve(NextResponse.json(transformedData, { status: 200 }));
       }
     });
