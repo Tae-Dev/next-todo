@@ -71,5 +71,5 @@ export async function GET() {
         resolve(NextResponse.json(transformedData, { status: 200 }));
       }
     });
-  });
+  }) as Promise<Response>;
 }
