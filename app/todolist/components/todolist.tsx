@@ -1,5 +1,5 @@
 "use client";
-import React, { useEffect, useState } from "react";
+import { useState } from "react";
 
 const masterList = [
   {
@@ -57,48 +57,40 @@ function TodoList() {
   const [list, setList] = useState(masterList);
   const [fruitList, setFruitList] = useState<masterListType[]>([]);
   const [vegetableList, setVegetableList] = useState<masterListType[]>([]);
-  const [temp, setTemp] = useState<masterListType[]>([]);
+  const [timers, setTimers] = useState<{ [key: string]: NodeJS.Timeout }>({});
 
-  useEffect(() => {
-    if (temp.length > 0) {
-      const timeoutId = setTimeout(() => {
-        for (const item of temp) {
-          setList((prevList) => [...prevList, item]);
-          if (item.type === "Fruit") {
-            setFruitList((prevFruits) =>
-              prevFruits.filter((fruit) => fruit.name !== item.name)
-            );
-          } else if (item.type === "Vegetable") {
-            setVegetableList((prevVegetables) =>
-              prevVegetables.filter((vegetable) => vegetable.name !== item.name)
-            );
-          }
-        }
-        setTemp([]);
-      }, 5000);
+  const handleMoveToColumn = (item: masterListType) => {
+    setList((prev) => prev.filter((i) => i.name !== item.name));
 
-      return () => clearTimeout(timeoutId);
-    }
-  }, [temp]);
-
-  const handleClickList = (item: masterListType) => {
-    const isInMasterList = list.some((i) => i.name === item.name);
-    if (isInMasterList) {
-      setList((prev) => prev.filter((i) => i.name !== item.name));
-      if (item.type === "Fruit") setFruitList((prev) => [...prev, item]);
-      else setVegetableList((prev) => [...prev, item]);
-      setTemp((prev) =>
-        prev.some((tempItem) => tempItem.name === item.name)
-          ? prev
-          : [...prev, item]
-      );
+    if (item.type === "Fruit") {
+      setFruitList((prev) => [...prev, item]);
     } else {
-      if (item.type === "Fruit")
-        setFruitList((prev) => prev.filter((i) => i.name !== item.name));
-      else setVegetableList((prev) => prev.filter((i) => i.name !== item.name));
-      setList((prev) => [...prev, item]);
-      setTemp((prev) => prev.filter((i) => i.name !== item.name));
+      setVegetableList((prev) => [...prev, item]);
     }
+
+    const timerId = setTimeout(() => {
+      handleMoveToMainList(item);
+    }, 5000);
+
+    setTimers((prev) => ({ ...prev, [item.name]: timerId }));
+  };
+
+  const handleMoveToMainList = (item: masterListType) => {
+    setTimers((prev) => {
+      const newTimers = { ...prev };
+      if (newTimers[item.name]) {
+        clearTimeout(newTimers[item.name]);
+        delete newTimers[item.name];
+      }
+      return newTimers;
+    });
+
+    if (item.type === "Fruit") {
+      setFruitList((prev) => prev.filter((i) => i.name !== item.name));
+    } else {
+      setVegetableList((prev) => prev.filter((i) => i.name !== item.name));
+    }
+    setList((prev) => [...prev, item]);
   };
 
   return (
@@ -114,7 +106,7 @@ function TodoList() {
         {list.map((item, index) => (
           <p
             key={index}
-            onClick={() => handleClickList(item)}
+            onClick={() => handleMoveToColumn(item)}
             className="flex items-center justify-center p-2 m-2 border-2 cursor-pointer hover:bg-slate-100 select-none"
           >
             {item.name}
@@ -128,7 +120,7 @@ function TodoList() {
         {fruitList.map((item, index) => (
           <p
             key={index}
-            onClick={() => handleClickList(item)}
+            onClick={() => handleMoveToMainList(item)}
             className="flex items-center justify-center p-2 m-2 border-2 cursor-pointer hover:bg-slate-100 select-none"
           >
             {item.name}
@@ -142,7 +134,7 @@ function TodoList() {
         {vegetableList.map((item, index) => (
           <p
             key={index}
-            onClick={() => handleClickList(item)}
+            onClick={() => handleMoveToMainList(item)}
             className="flex items-center justify-center p-2 m-2 border-2 cursor-pointer hover:bg-slate-100 select-none"
           >
             {item.name}
